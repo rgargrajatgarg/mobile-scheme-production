@@ -36,10 +36,11 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/scheme',schemeRouter);
 app.use('/upload',uploadRouter);
+
 //uncomment below code when pushing to build
-// app.get('/*', function(req,res) {
-//   res.sendFile(path.join(__dirname, 'build', 'index.html'));
-// });
+app.get('/*', function(req,res) {
+  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
   next(createError(404));
