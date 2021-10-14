@@ -5,11 +5,21 @@ const Scheme = require('../models/Scheme');
 
 //! Use of Multer
 
+function compareOperator(a,b,operator){
+    if(operator=== "=")
+    return (a===b);
+    else if (operator === ">=")
+    return (a>=b);
+    else if(operator === "<=")
+    return (a<=b);
+    else return false;
+}
 
 router.post('/', function(req, res){
     console.log(req.body.fileName);
     // console.log(req.body);
     data = req.body.excel_data;
+    console.log(data);
     dataHeaders = req.body.data_header;
     cond = req.body.condition_type;
     creditType = req.body.creditValue.creditType;
@@ -25,6 +35,9 @@ router.post('/', function(req, res){
     P = dataHeaders.price; 
     D = dataHeaders.date;
     var scheme_credit = 0;
+    var ct_mobile;
+    var total_sales = 0;
+    
     if(creditType === '%'){
         multiplyValue = creditValue/100;
         addValue = 0;
@@ -33,41 +46,21 @@ router.post('/', function(req, res){
         multiplyValue = 0;
         addValue = creditValue;
     }
+    dataDate = data.filter(item => (item[D] >=  start_date_number && item[D] <= end_date_number));
+    ct_mobile = dataDate.length;
     // console.log(active_mobile.P);
-
-    if(cond==="No"){
-        data.map((active_mobile)=>{
-            if(active_mobile[D]>= start_date_number && active_mobile[D]<=end_date_number){dateMultiply = 1}
-            else {dateMultiply=0}
-            scheme_credit = scheme_credit + ((active_mobile[P])*multiplyValue + addValue)*dateMultiply;
-        });
-    }
-    else if(cond === "Price_Condition"){
-
-        data.map((active_mobile)=>{
-            if(active_mobile[D]>= start_date_number && active_mobile[D]<=end_date_number){dateMultiply = 1}
-            else {dateMultiply=0}
-            if(priceCondOperator === ">="){
-                if(active_mobile[P] >= priceCondPrice ){
-                scheme_credit = scheme_credit + ((active_mobile[P])*multiplyValue + addValue)*dateMultiply;
-                }
-            }
-            else if(priceCondOperator === "="){
-                if(active_mobile[P] === priceCondPrice ){
-                    scheme_credit = scheme_credit + ((active_mobile[P])*multiplyValue + addValue)*dateMultiply;
-                }
-            }
-            else if(priceCondOperator === "<="){
-                if(active_mobile[P] <= priceCondPrice ){
-                    scheme_credit = scheme_credit + ((active_mobile[P])*multiplyValue + addValue)*dateMultiply;
-                }
-            }
-        })
-    } 
+    dataDate.map((active_mobile)=>{
+        total_sales = active_mobile[P] + total_sales;
+        if(cond==="No" || compareOperator(active_mobile[P],priceCondPrice,priceCondOperator)){
+            scheme_credit = scheme_credit + ((active_mobile[P])*multiplyValue + addValue);
+        }
+    });
     // console.log(start_date_number);
     // console.log(end_date_number);
     // console.log(scheme_credit);
     req.body.creditNote = scheme_credit;
+    req.body.ctMobile = ct_mobile;
+    req.body.totalSale = total_sales;
     const scheme = new Scheme(req.body);
     scheme.save(function(err){
         if(err) {
@@ -84,6 +77,19 @@ router.post('/', function(req, res){
 
 router.get('/', function(req, res){
     Scheme.find({}, { __v: 0,excel_data: 0,data_header: 0 }, function(err,data){
+        if(err) {
+            console.log("err", err);
+            res.status(400).send({
+                message: err,
+             });
+        } else {
+            res.send({results: data});
+        }
+    });
+});
+
+router.get('/admin/', function(req, res){
+    Scheme.find({}, { __v: 0 }, function(err,data){
         if(err) {
             console.log("err", err);
             res.status(400).send({

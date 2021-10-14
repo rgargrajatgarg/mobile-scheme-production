@@ -21,7 +21,9 @@ const schemeSchema = new mongoose.Schema(
           creditType: String,
           creditValue: Number
       },
-      excel_file: Object
+      excel_file: Object,
+      ctMobile: Number,
+      totalSale : Number
     }
 );
 
