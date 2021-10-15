@@ -39,7 +39,7 @@ router.post('/', function(req, res){
     var total_sales = 0;
     
     if(creditType === '%'){
-        multiplyValue = creditValue/100;
+        multiplyValue = (creditValue/1.18)/100;
         addValue = 0;
     }
     else if(creditType === 'Flat'){
