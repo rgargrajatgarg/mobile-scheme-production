@@ -2,28 +2,29 @@ const mongoose = require('mongoose');
 
 const schemeSchema = new mongoose.Schema(
     {
-      name: String,
-      start_date: Date,
-      end_date: Date,
-      condition_type: String,
-      creditNote: Number,
-      price_condition: {
+      name: [String],
+      start_date: [Date],
+      end_date: [Date],
+      condition_type: [String],
+      creditNote: [Number],
+      price_condition: [{
           operator: String,
           price : Number
-      },
+      }],
+      model_condition: [Object],
       data_header:{
             date: String,
             price: String,
             model: String
       },
       excel_data: Object,
-      creditValue:{
+      creditValue:[{
           creditType: String,
           creditValue: Number
-      },
+      }],
       excel_file: Object,
-      ctMobile: Number,
-      totalSale : Number
+      ctMobile: [Number],
+      totalSale : [Number]
     }
 );
 
