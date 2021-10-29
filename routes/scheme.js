@@ -30,8 +30,8 @@ function calcCreditNote(props){
     model_condition = props.model_condition;
     console.log(model_condition);
     creditValue = Number(props.creditValue.creditValue);
-    priceCondOperator = props.price_condition.priceOperator;
-    priceCondPrice = props.price_condition.condValue;
+    priceCondOperator = props.price_condition.operator;
+    priceCondPrice = props.price_condition.price;
     start_date = new Date(props.start_date);
     end_date = new Date(props.end_date);
     base_date = new Date('1900-01-01');
@@ -108,7 +108,7 @@ router.post('/', function(req, res){
 
 
 router.get('/', function(req, res){
-    Scheme.find({}, { __v: 0,excel_data: 0,data_header: 0 }, function(err,data){
+    Scheme.find ({}, { __v: 0,excel_data: 0,data_header: 0 }, function(err,data){
         if(err) {
             console.log("err", err);
             res.status(400).send({
@@ -117,7 +117,7 @@ router.get('/', function(req, res){
         } else {
             res.send({results: data});
         }
-    });
+    }).sort({"_id":-1});
 });
 
 router.get('/admin/', function(req, res){
@@ -147,7 +147,28 @@ router.get('/:id', function(req, res){
     });
 });
 
+
+router.get('/exceldata/:id', function(req, res){
+    console.log(req.params.id);
+    Scheme.findOne({_id:req.params.id}, {excel_data: 1,data_header: 1 }, function(err,data){
+        if(err) {
+            console.log("err", err);
+            res.status(400).send({
+                message: err,
+             });
+        } else {
+            res.send({results: data});
+        }
+    });
+});
+
+
+
+
+
 router.put('/:id', function(req, res){
+
+
     Scheme.findOne({_id:req.params.id}, { __v: 0}, function(err,data){
         if(err) {
             console.log("err", err);
@@ -155,13 +176,28 @@ router.put('/:id', function(req, res){
                 message: err,
              });
         } else {
-                new_req = req;
-                new_req.body.data_header = data.data_header;
-                new_req.body.excel_data = data.excel_data; 
-                calcParams = calcCreditNote(new_req);
-                req.body.creditNote = calcParams[0];
-                req.body.ctMobile = calcParams[1];
-                req.body.totalSale = calcParams[2];
+
+                scheme_credit = [];
+                ct_mobile = [];
+                total_sales = [];
+                excel_data = data.excel_data;
+                dataHeaders = data.data_header;
+                
+                for (let i = 0; i < req.body.name.length; i++) {
+                    var params = req;
+                    params.excel_data = excel_data;
+                    params.data_header = dataHeaders;
+                    params.condition_type = req.body.condition_type[i];
+                    params.creditValue = req.body.creditValue[i];
+                    params.model_condition = req.body.model_condition[i];
+                    params.price_condition = req.body.price_condition[i];
+                    params.start_date = req.body.start_date[i];
+                    params.end_date = req.body.end_date[i];
+                    var calc = calcCreditNote(params);
+                    scheme_credit.push(calc[0]);
+                    ct_mobile.push(calc[1]);
+                    total_sales.push(calc[2]);
+                }
                 Scheme.updateOne({_id:req.params.id},
                     {$set :{
                         name:req.body.name,
@@ -170,9 +206,10 @@ router.put('/:id', function(req, res){
                         condition_type:req.body.condition_type,
                         creditNote:scheme_credit,
                         price_condition:req.body.price_condition,
+                        model_condition:req.body.model_condition,
                         creditValue:req.body.creditValue,
-                        ctMobile:req.body.ctMobile,
-                        totalSale:req.body.totalSale
+                        ctMobile:ct_mobile,
+                        totalSale:total_sales
                     }},
                     function(err,data){
                     if(err) {
